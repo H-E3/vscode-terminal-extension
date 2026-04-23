@@ -34,99 +34,101 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HistoryManager = void 0;
-const sqlite3 = __importStar(require("sqlite3"));
+const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 class HistoryManager {
     constructor(storagePath) {
-        const dbPath = path.join(storagePath, 'command_history.db');
-        this.db = new sqlite3.Database(dbPath);
-        this.initDatabase();
+        this.historyPath = path.join(storagePath, 'command_history.json');
+        this.history = this.loadHistory();
     }
     /**
-     * Initialize the database schema
+     * Load history from file
      */
-    initDatabase() {
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS command_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                command TEXT NOT NULL,
-                cwd TEXT NOT NULL,
-                exitCode INTEGER,
-                duration INTEGER,
-                timestamp INTEGER NOT NULL
-            )
-        `);
-        // Create index for faster searching
-        this.db.run(`
-            CREATE INDEX IF NOT EXISTS idx_command_history_timestamp 
-            ON command_history (timestamp)
-        `);
+    loadHistory() {
+        try {
+            if (fs.existsSync(this.historyPath)) {
+                const data = fs.readFileSync(this.historyPath, 'utf8');
+                return JSON.parse(data);
+            }
+        }
+        catch (error) {
+            console.error('Error loading history:', error);
+        }
+        return [];
+    }
+    /**
+     * Save history to file
+     */
+    saveHistory() {
+        try {
+            // Ensure the directory exists
+            const dir = path.dirname(this.historyPath);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            fs.writeFileSync(this.historyPath, JSON.stringify(this.history, null, 2));
+        }
+        catch (error) {
+            console.error('Error saving history:', error);
+        }
     }
     /**
      * Add a command to history
      */
     addCommand(command, cwd, exitCode, duration) {
-        return new Promise((resolve, reject) => {
-            this.db.run('INSERT INTO command_history (command, cwd, exitCode, duration, timestamp) VALUES (?, ?, ?, ?, ?)', [command, cwd, exitCode, duration, Date.now()], (err) => {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve();
-                }
-            });
+        return new Promise((resolve) => {
+            const newEntry = {
+                id: this.history.length > 0 ? Math.max(...this.history.map(h => h.id)) + 1 : 1,
+                command,
+                cwd,
+                exitCode,
+                duration,
+                timestamp: Date.now()
+            };
+            this.history.unshift(newEntry);
+            // Keep only the last 1000 entries to prevent the file from getting too large
+            if (this.history.length > 1000) {
+                this.history = this.history.slice(0, 1000);
+            }
+            this.saveHistory();
+            resolve();
         });
     }
     /**
      * Get command history
      */
     getHistory(limit = 100, offset = 0) {
-        return new Promise((resolve, reject) => {
-            this.db.all('SELECT * FROM command_history ORDER BY timestamp DESC LIMIT ? OFFSET ?', [limit, offset], (err, rows) => {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve(rows);
-                }
-            });
+        return new Promise((resolve) => {
+            const result = this.history.slice(offset, offset + limit);
+            resolve(result);
         });
     }
     /**
      * Search command history
      */
     searchHistory(query, limit = 50) {
-        return new Promise((resolve, reject) => {
-            this.db.all('SELECT * FROM command_history WHERE command LIKE ? ORDER BY timestamp DESC LIMIT ?', [`%${query}%`, limit], (err, rows) => {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve(rows);
-                }
-            });
+        return new Promise((resolve) => {
+            const result = this.history
+                .filter(entry => entry.command.includes(query))
+                .slice(0, limit);
+            resolve(result);
         });
     }
     /**
      * Clear command history
      */
     clearHistory() {
-        return new Promise((resolve, reject) => {
-            this.db.run('DELETE FROM command_history', (err) => {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve();
-                }
-            });
+        return new Promise((resolve) => {
+            this.history = [];
+            this.saveHistory();
+            resolve();
         });
     }
     /**
-     * Close the database connection
+     * Close the history manager
      */
     close() {
-        this.db.close();
+        // No need to close anything for file-based storage
     }
 }
 exports.HistoryManager = HistoryManager;
