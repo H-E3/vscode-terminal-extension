@@ -83,8 +83,7 @@ export class TerminalManager {
 
     private getWebviewUri(fileName: string): string {
         const filePath = path.join('out', 'webview', fileName);
-        return vscode.Uri.file(path.join(this.context.extensionPath, filePath))
-            .with({ scheme: 'vscode-resource' })
-            .toString();
+        const fileUri = vscode.Uri.file(path.join(this.context.extensionPath, filePath));
+        return this.panel?.webview.asWebviewUri(fileUri)?.toString() || '';
     }
 }
