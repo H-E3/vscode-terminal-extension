@@ -37,11 +37,10 @@
     "build:webview": "webpack --config webpack.config.js"
   },
   "dependencies": {
-    "xterm": "^5.3.0",
-    "xterm-addon-fit": "^0.8.0",
-    "xterm-addon-webgl": "^0.16.0",
-    "sqlite3": "^5.1.7"
-  },
+        "xterm": "^5.3.0",
+        "xterm-addon-fit": "^0.8.0",
+        "xterm-addon-webgl": "^0.16.0"
+    },
   "devDependencies": {
     "@types/vscode": "^1.74.0",
     "@types/node": "^18.0.0",
