@@ -16,7 +16,6 @@ class SmartTerminal {
                 foreground: '#d4d4d4',
                 cursor: '#ffffff',
                 cursorAccent: '#007acc',
-                selection: 'rgba(255, 255, 255, 0.1)',
                 black: '#0c0c0c',
                 red: '#f48771',
                 green: '#57ab5a',
@@ -48,6 +47,8 @@ class SmartTerminal {
         this.terminal.loadAddon(this.fitAddon);
         this.terminal.loadAddon(webglAddon);
 
+        this.blockManager = new BlockManager(this.terminal);
+
         this.initializeTerminal();
         this.setupEventListeners();
         this.setupResizeHandler();
@@ -74,11 +75,31 @@ class SmartTerminal {
     }
 
     private setupEventListeners() {
+        let currentCommand = '';
+
         this.terminal.onData((data) => {
             // Handle terminal input
-            console.log('Terminal data:', data);
-            // For now, just echo back the input
-            this.terminal.write(data);
+            if (data === '\r') { // Enter key
+                // Start a new command block
+                this.blockManager.startBlock();
+                // Add command to block
+                this.blockManager.addCommand(currentCommand);
+                // Execute command (simulated)
+                this.executeCommand(currentCommand);
+                // Reset current command
+                currentCommand = '';
+                // Move to next line and show prompt
+                this.terminal.writeln('');
+                this.terminal.write('$ ');
+            } else if (data === '\b') { // Backspace
+                if (currentCommand.length > 0) {
+                    currentCommand = currentCommand.slice(0, -1);
+                    this.terminal.write('\b \b');
+                }
+            } else if (data.charCodeAt(0) >= 32 && data.charCodeAt(0) <= 126) { // Printable characters
+                currentCommand += data;
+                this.terminal.write(data);
+            }
         });
 
         this.terminal.onKey((event) => {
@@ -91,12 +112,25 @@ class SmartTerminal {
         });
     }
 
+    private executeCommand(command: string) {
+        // Simulate command execution
+        setTimeout(() => {
+            const output = `Command executed: ${command}`;
+            this.terminal.writeln(output);
+            this.blockManager.addOutput(output);
+            this.blockManager.endBlock(0); // 0 exit code for success
+        }, 500);
+    }
+
     private setupResizeHandler() {
         window.addEventListener('resize', () => {
             this.fitAddon.fit();
         });
     }
 }
+
+// Declare acquireVsCodeApi for TypeScript
+declare function acquireVsCodeApi(): any;
 
 // Initialize the terminal when the DOM is ready
 document.addEventListener('DOMContentLoaded', () => {

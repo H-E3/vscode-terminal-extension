@@ -1,12 +1,15 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { HistoryManager } from './historyManager';
 
 export class TerminalManager {
     private context: vscode.ExtensionContext;
     private panel: vscode.WebviewPanel | undefined;
+    private historyManager: HistoryManager;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
+        this.historyManager = new HistoryManager(context.globalStoragePath);
     }
 
     public openSmartTerminal() {

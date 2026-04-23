@@ -26,12 +26,12 @@ if [ -z "$VSCODE_SMART_TERMINAL_INTEGRATED" ]; then
 
     # Command start marker
     preexec() {
-        printf "\033]633;A\007"
+        printf "\x1b]633;A\x07"
     }
 
     # Command end marker
     precmd() {
-        printf "\033]633;B\007"
+        printf "\x1b]633;B\x07"
     }
 fi
 `;
@@ -48,12 +48,12 @@ if [ -z "$VSCODE_SMART_TERMINAL_INTEGRATED" ]; then
 
     # Command start marker
     preexec() {
-        printf "\033]633;A\007"
+        printf "\x1b]633;A\x07"
     }
 
     # Command end marker
     precmd() {
-        printf "\033]633;B\007"
+        printf "\x1b]633;B\x07"
     }
 fi
 `;
@@ -70,12 +70,12 @@ if (-not $env:VSCODE_SMART_TERMINAL_INTEGRATED) {
 
     # Command start marker
     function PreCommand {
-        Write-Host "\033]633;A\007" -NoNewline
+        Write-Host "\x1b]633;A\x07" -NoNewline
     }
 
     # Command end marker
     function PostCommand {
-        Write-Host "\033]633;B\007" -NoNewline
+        Write-Host "\x1b]633;B\x07" -NoNewline
     }
 
     # Register hooks
