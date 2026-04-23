@@ -53,7 +53,7 @@ class TerminalManager {
                 vscode.Uri.file(path.join(this.context.extensionPath, 'out', 'webview'))
             ]
         });
-        this.panel.webview.html = this.getWebviewContent();
+        this.panel.webview.html = this.getWebviewContent(this.panel.webview);
         this.panel.onDidDispose(() => {
             this.panel = undefined;
         });
@@ -65,13 +65,14 @@ class TerminalManager {
             }
         });
     }
-    getWebviewContent() {
+    getWebviewContent(webview) {
         return `
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; script-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline';">
             <title>Smart Terminal</title>
             <style>
                 body {
@@ -95,15 +96,15 @@ class TerminalManager {
             <div id="terminal-container">
                 <div id="terminal"></div>
             </div>
-            <script src="${this.getWebviewUri('webview.js')}"></script>
+            <script src="${this.getWebviewUri(webview, 'webview.js')}"></script>
         </body>
         </html>
         `;
     }
-    getWebviewUri(fileName) {
+    getWebviewUri(webview, fileName) {
         const filePath = path.join('out', 'webview', fileName);
         const fileUri = vscode.Uri.file(path.join(this.context.extensionPath, filePath));
-        return this.panel?.webview.asWebviewUri(fileUri)?.toString() || '';
+        return webview.asWebviewUri(fileUri).toString();
     }
 }
 exports.TerminalManager = TerminalManager;
