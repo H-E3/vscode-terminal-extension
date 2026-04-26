@@ -84,7 +84,7 @@ class TerminalManager {
                 #terminal-container {
                     width: 100%;
                     height: 100%;
-                    background-color: #1e1e1e;
+                    background-color: #ffffff;
                 }
                 #terminal {
                     width: 100%;
